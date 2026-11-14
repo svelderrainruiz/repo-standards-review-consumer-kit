@@ -81,6 +81,22 @@ being updated to. The consumer check catches both ways a pin can go stale:
   hand, fails. If the manifest can't be fetched, the check reports UNKNOWN
   (exit 2). `--offline` skips only this comparison.
 
+## Updating a repository adopted at v0.4.0
+
+The v0.4.0 kit block had no closing line, so in a repository whose own rules
+follow the block, the update that introduces the closing line cannot apply
+cleanly, although cruft still reports success. Check `git status` after that
+update. Depending on the repository's history, you will see one of two outcomes:
+
+- **A `.gitattributes.rej` file.** Add its lines by hand, then delete the `.rej` file.
+- **Conflict markers in `.gitattributes`, shown as `UU` in `git status`.** Remove
+  the markers and keep both sides. Don't run `git add -A` while markers are present.
+
+Either way, the kit's new last line(s), ending with
+`# End of the repo-standards-review consumer-kit rules.`, go directly after the
+kit's previous last rule and above the repository's own rules. Then run the
+consumer check. Later updates apply cleanly.
+
 ## Adopting the kit in an existing repository
 
 `cruft link` records the linkage but brings in no files, and `cruft diff` skips
@@ -96,8 +112,9 @@ cp -r /tmp/kit/*/. <repository>/
 
 Then, in this order:
 
-1. Move any rules from the repository's previous `.gitattributes` below the
-   kit's rules. cruft keeps them through later updates. A broad rule such as
+1. Move any rules from the repository's previous `.gitattributes` below the kit's
+   closing line (`# End of the repo-standards-review consumer-kit rules.`). cruft
+   keeps them through later updates. A broad rule such as
    `* text=auto eol=lf` placed there overrides the kit's `-text` exemptions:
    scope it, or repeat the exemptions after it.
 2. Run `git add -A` so the new kit files are tracked; the check reads only

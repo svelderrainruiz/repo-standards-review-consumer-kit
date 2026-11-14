@@ -1,6 +1,6 @@
 # Managed by the repo-standards-review consumer kit (templates/consumer). Change
 # the answers in .cruft.json and run `cruft update` rather than editing these
-# rules; cruft keeps repository-specific rules added after the last line.
+# rules. Add repository-specific rules below the closing line; cruft keeps them.
 #
 # Executable scripts check out with LF on every platform, including Windows with
 # core.autocrlf=true, because a CR breaks their interpreter line. text=auto
@@ -23,3 +23,4 @@ git-hooks/** text=auto eol=lf
 {{ path.strip() }} -text
 {%- endfor %}
 {%- endif %}
+# End of the repo-standards-review consumer-kit rules.
