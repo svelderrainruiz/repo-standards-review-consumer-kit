@@ -1,0 +1,21 @@
+{
+    "repo_name": "consumer",
+    "forge": [
+        "github",
+        "gitlab"
+    ],
+    "github_runs_on": "ubuntu-latest",
+    "default_branches": "main,develop",
+    "gitlab_stage": "test",
+    "script_dirs": "scripts",
+    "lf_paths": "",
+    "exempt_paths": "",
+    "rsr_tag": "",
+    "rsr_commit": "",
+    "workbench_image": "",
+    "__kit_dir": "{{ cookiecutter.repo_name | slugify }}",
+    "_copy_without_render": [
+        ".repo-standards-review/check_consumer.py"
+    ],
+    "_gitattributes": ".gitattributes"
+}

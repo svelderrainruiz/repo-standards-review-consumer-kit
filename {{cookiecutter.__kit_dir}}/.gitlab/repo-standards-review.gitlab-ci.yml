@@ -1,0 +1,17 @@
+# Managed by the repo-standards-review consumer kit (templates/consumer); update it with `cruft update`.
+# Include it from .gitlab-ci.yml, which must declare the stage below in its stages:
+#   include:
+#     - local: .gitlab/repo-standards-review.gitlab-ci.yml
+repo-standards-review-consumer-check:
+  stage: {{ cookiecutter.gitlab_stage }}
+  # The consumer's default: block (for example an npm before_script) does not apply to this image.
+  inherit:
+    default: false
+  image: python:3.12-bookworm@sha256:4209fae09a3e20afd863e528bfddc235da5fd5977983e1996cd54cc9a72e6267
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+{%- for branch in cookiecutter.default_branches.split(",") if branch.strip() %}
+    - if: '$CI_COMMIT_BRANCH == "{{ branch.strip() }}"'
+{%- endfor %}
+  script:
+    - python3 .repo-standards-review/check_consumer.py

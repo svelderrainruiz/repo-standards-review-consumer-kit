@@ -1,0 +1,6 @@
+{
+    "schema": "rsr/consumer-pin@1",
+    "rsr_tag": "{{ cookiecutter.rsr_tag }}",
+    "rsr_commit": "{{ cookiecutter.rsr_commit }}",
+    "workbench_image": "{{ cookiecutter.workbench_image }}"
+}

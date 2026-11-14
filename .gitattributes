@@ -1,0 +1,2 @@
+# Template files keep LF on every checkout, so baked files do too.
+* text=auto eol=lf

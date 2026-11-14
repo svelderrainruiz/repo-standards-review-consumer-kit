@@ -1,0 +1,25 @@
+# Managed by the repo-standards-review consumer kit (templates/consumer). Change
+# the answers in .cruft.json and run `cruft update` rather than editing these
+# rules; cruft keeps repository-specific rules added after the last line.
+#
+# Executable scripts check out with LF on every platform, including Windows with
+# core.autocrlf=true, because a CR breaks their interpreter line. text=auto
+# leaves binary files in script directories untouched.
+*.sh text eol=lf
+.githooks/** text=auto eol=lf
+githooks/** text=auto eol=lf
+git-hooks/** text=auto eol=lf
+.husky/** text=auto eol=lf
+.repo-standards-review/** text eol=lf
+{%- for path in cookiecutter.script_dirs.split(",") if path.strip() %}
+{{ path.strip() }}/** text=auto eol=lf
+{%- endfor %}
+{%- for path in cookiecutter.lf_paths.split(",") if path.strip() %}
+{{ path.strip() }} text=auto eol=lf
+{%- endfor %}
+{%- if cookiecutter.exempt_paths.strip() %}
+# Byte-provenance files keep their exact bytes, whatever the rules above say.
+{%- for path in cookiecutter.exempt_paths.split(",") if path.strip() %}
+{{ path.strip() }} -text
+{%- endfor %}
+{%- endif %}
