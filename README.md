@@ -40,8 +40,11 @@ The template contains no standards text.
 | `rsr_tag`, `rsr_commit`, `workbench_image` | **Owned by the release.** The defaults are empty, and baking fails until they are supplied from the RSR release manifest. |
 
 The kit always pins `*.sh`, the top-level hook directories (`.githooks`,
-`githooks`, `git-hooks`, `.husky`), and its own `.repo-standards-review/`
-directory. The pre-generation hook refuses unsafe answers before writing
+`githooks`, `git-hooks`, `.husky`), and its own files:
+`.repo-standards-review.json`, `.cruft.json`, and the `.repo-standards-review/`
+directory. They are repository metadata, so keep them out of product packages
+such as a VSIX, a wheel, or an image. labview-benchmark-actor, for example,
+lists them in `.vscodeignore`. The pre-generation hook refuses unsafe answers before writing
 anything: parent, absolute, `.git`, space- or newline-containing paths, injected
 runner labels or stages, and unknown forges.
 
