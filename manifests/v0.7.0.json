@@ -1,0 +1,6 @@
+{
+  "rsr_commit": "e1e0ceaf213b4cd50c2932b9437e0864fd557291",
+  "rsr_tag": "v0.7.0",
+  "schema": "rsr/release-manifest@1",
+  "workbench_image": "registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench@sha256:1e8b9e4dd99b4f978b2e8ca7569bc600dc8a33e6c45c3761159556980610e2c6"
+}
