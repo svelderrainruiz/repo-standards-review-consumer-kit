@@ -23,6 +23,11 @@ tagged with the release (`vX.Y.Z`). Use that repository as the cruft template
   `.gitattributes` files, so `.git/info/attributes` and system or global
   attribute files make no difference, as in the RSR evidence scanner.
 
+The kit also vendors `.repo-standards-review/observations.py`, which writes and
+checks the test-case items of the member's wiki test pages under the ecosystem
+wiki standard; see [Test-case observations](#test-case-observations). CI does
+not run it, because it needs the wiki and execution evidence.
+
 The template contains no standards text.
 
 ## Answers
@@ -130,10 +135,56 @@ Then, in this order:
 4. Run `git add --renormalize .`, then commit. `--renormalize` re-adds only
    files that are already tracked, which is why step 2 comes first.
 
+## Test-case observations
+
+When a wiki test page's stimulus runs a test file, each item of its Required
+observation names one test case as `` `file` › describe chain › title ``,
+exactly as the test runner reports it at the member commit (ecosystem wiki
+standard `@6`). `observations.py` needs only Python 3.9+ and Git:
+
+```bash
+# In a clean checkout of the member commit, run the tests the pages' steps run on this platform.
+npx vitest run --reporter=json --outputFile=/tmp/vitest.json tests/unit
+python3 .repo-standards-review/observations.py evidence --report /tmp/vitest.json \
+  --platform linux-x64 --output /tmp/evidence-linux-x64.json
+
+# Write the test-case items into the wiki working tree, review the diff, and commit it.
+python3 .repo-standards-review/observations.py generate --wiki ../<member>.wiki \
+  --evidence /tmp/evidence-linux-x64.json
+
+# Check the committed wiki: exit 0 with no findings, 1 with findings, 2 when it cannot run.
+python3 .repo-standards-review/observations.py check --wiki ../<member>.wiki \
+  --member-commit <commit> --evidence /tmp/evidence-linux-x64.json
+```
+
+- **Evidence** is `rsr/test-evidence@1`: the commit, the platform, and each
+  test case's file, name and status. `evidence` reads Jest-compatible JSON
+  reports and refuses a checkout whose tracked files differ from HEAD, or a
+  test file that is not in HEAD. Another runner can write the same JSON.
+- **Platforms:** give one `--evidence` file per platform. A test case passes when
+  some evidence shows it passing and none shows it failing. So run a step that
+  names Windows on Windows, and leave its test files out of the Linux run.
+- **`generate`** handles each page whose stimulus names a test file that the
+  evidence ran, and lists every test case of those files in runner order. A page
+  without test-case items gets a new Required observation: a sentence naming
+  the requirements whose `TestID` links the page, then the list. That replaces
+  its prose, so review the diff. On later runs only the list is replaced, so an
+  edited lead-in sentence and the conditions after the list stay. Pass test
+  page IDs to limit it, and `--dry-run` to exit 1 when a page would change.
+  It writes nothing when it refuses a page, for example one with two lists.
+- **`check`** reads the committed wiki at `--commit` (default `HEAD`). It reports
+  `observation-test-missing`, `observation-not-verbatim` and
+  `observation-not-passing` once per test-case item, nested or not. An item
+  from a file that the stimulus does not run is `observation-test-missing`. It
+  notes pages whose stimulus runs an evidence file and that list no test case.
+
 ## Validation
 
 These paths are in the RSR source repository, where the kit is maintained under
 `templates/consumer/`.
+
+`scripts/eval_test_observations.py` (TEST-164) exercises `observations.py`
+against fixture member and wiki repositories, in `validate-skill`.
 
 `scripts/eval_consumer_template.py` (TEST-159) publishes the kit to a local
 repository the way the release pipeline does, checks pins against a local

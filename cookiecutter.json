@@ -15,7 +15,8 @@
     "workbench_image": "",
     "__kit_dir": "{{ cookiecutter.repo_name | slugify }}",
     "_copy_without_render": [
-        ".repo-standards-review/check_consumer.py"
+        ".repo-standards-review/check_consumer.py",
+        ".repo-standards-review/observations.py"
     ],
     "_gitattributes": ".gitattributes"
 }

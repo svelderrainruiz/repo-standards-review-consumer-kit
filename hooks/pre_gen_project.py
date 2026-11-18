@@ -47,7 +47,8 @@ def main():
     errors = []
     # Private template settings name output paths, so they must keep the template's own values.
     if ANSWERS.get("_gitattributes") != ".gitattributes" \
-            or ANSWERS.get("_copy_without_render") != [".repo-standards-review/check_consumer.py"] \
+            or ANSWERS.get("_copy_without_render") != [".repo-standards-review/check_consumer.py",
+                                                ".repo-standards-review/observations.py"] \
             or not isinstance(ANSWERS.get("__kit_dir"), str) \
             or re.fullmatch(r"[a-z0-9][a-z0-9-]{0,99}", ANSWERS["__kit_dir"]) is None:
         errors.append("the template's private settings were overridden")
