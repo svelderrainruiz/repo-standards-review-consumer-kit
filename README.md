@@ -139,8 +139,9 @@ Then, in this order:
 
 When a wiki test page's stimulus runs a test file, each item of its Required
 observation names one test case as `` `file` › describe chain › title ``,
-exactly as the test runner reports it at the member commit (ecosystem wiki
-standard `@6`). `observations.py` needs only Python 3.9+ and Git:
+exactly as the test runner reports it at the member commit, or names the whole
+file as `` `file` `` when the page would otherwise exceed its budget (ecosystem
+wiki standard `@7`). `observations.py` needs only Python 3.9+ and Git:
 
 ```bash
 # In a clean checkout of the member commit, run the tests the pages' steps run on this platform.
@@ -158,7 +159,10 @@ python3 .repo-standards-review/observations.py check --wiki ../<member>.wiki \
 ```
 
 - **Evidence** is `rsr/test-evidence@1`: the commit, the platform, and each
-  test case's file, name and status. `evidence` reads Jest-compatible JSON
+  test case's file, name and status. For pytest, run
+  `python -m pytest --junitxml=<report>` from the checkout's root and pass
+  `--format pytest-junit`; the node ID `file::Class::test[param]` becomes
+  `` `file` › Class › test[param] ``. `evidence` reads Jest-compatible JSON
   reports and refuses a checkout whose tracked files differ from HEAD, or a
   test file that is not in HEAD. Another runner can write the same JSON.
 - **Platforms:** give one `--evidence` file per platform. A test case passes when
@@ -172,6 +176,15 @@ python3 .repo-standards-review/observations.py check --wiki ../<member>.wiki \
   edited lead-in sentence and the conditions after the list stay. Pass test
   page IDs to limit it, and `--dry-run` to exit 1 when a page would change.
   It writes nothing when it refuses a page, for example one with two lists.
+- **`stimulus`** gives a page whose stimulus names no test file a runnable one,
+  from the test files that the evidence ran and that the `TestArtifact` sections
+  of the requirements linking the page name:
+  `stimulus --wiki <wiki> --evidence <file> --member <name> --step '<setup>' --command 'python -m pytest {files}'`.
+  Review the diff: it replaces the prose stimulus.
+- **File items:** when listing every test case would put a page over 16,384
+  bytes, or its registry text over 16,384 characters, `generate` names the
+  largest files as `` `file` `` instead. A file item passes only when every test
+  case of the file passes.
 - **`check`** reads the committed wiki at `--commit` (default `HEAD`). It reports
   `observation-test-missing`, `observation-not-verbatim` and
   `observation-not-passing` once per test-case item, nested or not. An item
