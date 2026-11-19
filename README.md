@@ -28,6 +28,9 @@ checks the test-case items of the member's wiki test pages under the ecosystem
 wiki standard; see [Test-case observations](#test-case-observations). CI does
 not run it, because it needs the wiki and execution evidence.
 
+It also vendors `.repo-standards-review/wiki_generate.py`, which builds the
+member's wiki from `docs/`; see [Wiki generator](#wiki-generator).
+
 The template contains no standards text.
 
 ## Answers
@@ -205,6 +208,54 @@ python3 .repo-standards-review/observations.py check --wiki ../<member>.wiki \
   from a file that the stimulus does not run is `observation-test-missing`. It
   notes pages whose stimulus runs an evidence file and that list no test case.
 
+## Wiki generator
+
+`wiki_generate.py` builds the member's wiki from its `docs/` folder, so the wiki
+regenerates, and drift-checks, without a model. It needs only Python 3.9+, and the
+same `docs/` and configuration always give the same files, byte for byte.
+
+```bash
+# Write the wiki into a clone of the member's wiki, keeping .git and pruning stale pages.
+python3 .repo-standards-review/wiki_generate.py --out ../<member>.wiki
+# Exit 1 when the clone differs from what docs/ generates.
+python3 .repo-standards-review/wiki_generate.py --check ../<member>.wiki
+```
+
+With neither option it validates the generated wiki and prints a JSON summary. It
+reads `.wiki-generator.json` at the member root (`--member-root`, `--config`),
+schema `rsr/wiki-generator-config@1`:
+
+| Key | Meaning |
+| --- | --- |
+| `repoUrl`, `branch`, `wikiTitle`, `docs` | source links, `Home` title, and the docs folder; `description` replaces the `Home` lead-in |
+| `srs` | `path` and `style`: `blocks` (`### <ID>: <title>` with `- Label: text` bullets) or `table` (`idColumn`, default the first); `titleFrom` (`rtm:<column>`) titles table-style pages |
+| `rtm` | `path`, `idColumn`, and the `columns` shown in the generated matrix |
+| `architecture` | `overview`, `adrDir` and `adrIndex`, relative to `docs` |
+| `testPlan` | `path` and `idColumn`; every table row whose first cell starts with a test-scope ID is a test |
+| `scopes.software` | `directory`, `idPrefix` or `idPrefixes`, and the ordered `sections`, each `{"name", "from"}` with `from` one of `block:<label>`, `table:<header>` or `rtm:<column>` |
+| `scopes.test` | `directory` and the prefix; needs `testPlan` |
+| `issueLinks` | `false` keeps `owner/repo#N` as text; by default it becomes a GitHub issue link |
+| `names`, `words`, `exclude`, `assetDirs`, `sections`, `obsidian` | page names by file, word casing, skipped files (globs), image folders, `Home` groups by folder, the Obsidian settings |
+
+`--out` prunes every file that the wiki does not hold, so it refuses, with exit 2 and no write, the member root and any parent of it, a file, and any non-empty directory that is neither a previous output (it holds `.wiki-profile.json`) nor a git clone (it holds `.git`). It writes into an absent or empty directory.
+
+The generator refuses a configuration that would drop content: a label of a
+requirement that no section names, or a section that no requirement has, is an
+error. `.wiki-profile.json` (`rsr/wiki-profile@2`) comes from the same
+configuration, with the test scope's sections fixed by the standard.
+
+Pages:
+- a requirement page for each specification entry, with its sections in order; a
+  `TestID` section links only test pages. A page over the budget moves its
+  largest sections to note pages;
+- a stub test page for each test-plan row (`<!-- page-kind: stub -->`); the
+  canonical Stimulus and Required observation items come from
+  `observations.py generate`;
+- every other Markdown page of `docs/`, with relative links rewritten to
+  wikilinks or repository URLs, the generated matrix, `ADR-Index`, `Home` and
+  `_Sidebar`. A page over 16,384 bytes becomes a hub whose children are its
+  parts, and `Home` indexes every page, as the standard's whole-wiki rules require.
+
 ## Validation
 
 These paths are in the RSR source repository, where the kit is maintained under
@@ -212,6 +263,9 @@ These paths are in the RSR source repository, where the kit is maintained under
 
 `scripts/eval_test_observations.py` (TEST-164, TEST-165) exercises `observations.py`
 against fixture member and wiki repositories, in `validate-skill`.
+
+`scripts/eval_wiki_generator.py` (TEST-166) exercises `wiki_generate.py` against
+fixture members, in `validate-skill`.
 
 `scripts/eval_consumer_template.py` (TEST-159) publishes the kit to a local
 repository the way the release pipeline does, checks pins against a local
