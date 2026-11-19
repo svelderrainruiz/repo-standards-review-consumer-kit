@@ -141,7 +141,7 @@ When a wiki test page's stimulus runs a test file, each item of its Required
 observation names one test case as `` `file` › describe chain › title ``,
 exactly as the test runner reports it at the member commit, or names the whole
 file as `` `file` `` when the page would otherwise exceed its budget (ecosystem
-wiki standard `@7`). `observations.py` needs only Python 3.9+ and Git:
+wiki standard `@8`). `observations.py` needs only Python 3.9+ and Git:
 
 ```bash
 # In a clean checkout of the member commit, run the tests the pages' steps run on this platform.
@@ -155,7 +155,8 @@ python3 .repo-standards-review/observations.py generate --wiki ../<member>.wiki 
 
 # Check the committed wiki: exit 0 with no findings, 1 with findings, 2 when it cannot run.
 python3 .repo-standards-review/observations.py check --wiki ../<member>.wiki \
-  --member-commit <commit> --evidence /tmp/evidence-linux-x64.json
+  --member-commit <commit> --evidence /tmp/evidence-linux-x64.json \
+  --member-root ../<member>
 ```
 
 - **Evidence** is `rsr/test-evidence@1`: the commit, the platform, and each
@@ -165,14 +166,27 @@ python3 .repo-standards-review/observations.py check --wiki ../<member>.wiki \
   `` `file` › Class › test[param] ``. `evidence` reads Jest-compatible JSON
   reports and refuses a checkout whose tracked files differ from HEAD, or a
   test file that is not in HEAD. Another runner can write the same JSON.
+- **No unmapped coverage claims:** `check` reports `observation-overclaim` for a `Together they cover <IDs>.`
+  sentence unless `--coverage-map` (the file `generate` reads) names every ID for that page.
+- **Anchored observations (opt-in):** with `--anchored`, `check` reports `observation-unanchored` for every
+  list item or paragraph of a Required observation that is not a test-case
+  item, except a paragraph that directly precedes a list. Only one quote is
+  anchored: an item that is just one inline code span, with an optional final
+  period, whose text is in a file that the stimulus names. `--member-root` is a
+  checkout of the member at the evidence commit, and the tool reads the file
+  from that commit. Without it no quote can be verified. `--member-root` needs `--anchored`; without the flag `check` behaves as at `@7` and refuses it. Exit codes and output
+  lines cannot be verified until the evidence records step output.
 - **Platforms:** give one `--evidence` file per platform. A test case passes when
   some evidence shows it passing and none shows it failing. So run a step that
   names Windows on Windows, and leave its test files out of the Linux run.
 - **`generate`** handles each page whose stimulus names a test file that the
   evidence ran, and lists every test case of those files in runner order. A page
-  without test-case items gets a new Required observation: a sentence naming
-  the requirements whose `TestID` links the page, then the list. That replaces
-  its prose, so review the diff. On later runs only the list is replaced, so an
+  without test-case items gets a new Required observation: a sentence declaring
+  the requirements whose `TestID` links the page `not verified here`, then the
+  list. A link asserts no coverage. Pass `--coverage-map <file.json>`, a
+  person's `{"<test page ID>": ["<requirement ID>", ...]}`, to add `Together they
+  cover <IDs>.` for the requirements that the page's items verify; the page must
+  link each, or the tool refuses with exit 2. The map affects only a newly written observation: for a page that already lists test cases, or whose stimulus names no test file that the evidence ran, the tool prints a `NOTE` and writes nothing. That replaces its prose, so review the diff. On later runs only the list is replaced, so an
   edited lead-in sentence and the conditions after the list stay. Pass test
   page IDs to limit it, and `--dry-run` to exit 1 when a page would change.
   It writes nothing when it refuses a page, for example one with two lists.
@@ -196,7 +210,7 @@ python3 .repo-standards-review/observations.py check --wiki ../<member>.wiki \
 These paths are in the RSR source repository, where the kit is maintained under
 `templates/consumer/`.
 
-`scripts/eval_test_observations.py` (TEST-164) exercises `observations.py`
+`scripts/eval_test_observations.py` (TEST-164, TEST-165) exercises `observations.py`
 against fixture member and wiki repositories, in `validate-skill`.
 
 `scripts/eval_consumer_template.py` (TEST-159) publishes the kit to a local
