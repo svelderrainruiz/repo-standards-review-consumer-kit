@@ -15,6 +15,7 @@ git-hooks/** text=auto eol=lf
 # same bytes on every platform.
 .repo-standards-review.json text eol=lf
 .cruft.json text eol=lf
+.wiki-generator.json text eol=lf
 {%- for path in cookiecutter.script_dirs.split(",") if path.strip() %}
 {{ path.strip() }}/** text=auto eol=lf
 {%- endfor %}

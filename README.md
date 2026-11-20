@@ -33,6 +33,30 @@ member's wiki from `docs/`; see [Wiki generator](#wiki-generator).
 
 The template contains no standards text.
 
+## License
+
+The kit is licensed under the BSD Zero Clause License (`0BSD`): the public kit
+repository carries the `LICENSE` file at its root, composed from
+`templates/consumer/LICENSE` in the RSR source by `mirror-consumer-kit`. The
+file is the kit's own and is not copied into a consumer repository.
+
+## Packaging a consumer
+
+The kit's files are tooling for the repository's own checks, not part of a
+product that the repository ships. A repository that packages itself, such as a
+VS Code extension built with `vsce`, excludes these paths from the package:
+
+- `.cruft.json`
+- `.repo-standards-review.json`
+- `.repo-standards-review/**`
+- `.wiki-generator.json`
+
+A package-list test keeps them out: list the files that the packaging tool would
+include (`vsce ls`, `npm pack --dry-run --json`) and fail when any path above is
+present. labview-benchmark-actor's `test/package-files.mjs` is an example. The
+generated `.gitattributes` pins `.wiki-generator.json`, like the other root
+files, to LF so a package or hash of the tree has the same bytes on every platform.
+
 ## Answers
 
 | Answer | Meaning |
