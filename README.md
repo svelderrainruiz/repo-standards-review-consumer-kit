@@ -231,8 +231,8 @@ schema `rsr/wiki-generator-config@1`:
 | `srs` | `path` and `style`: `blocks` (`### <ID>: <title>` with `- Label: text` bullets) or `table` (`idColumn`, default the first); `titleFrom` (`rtm:<column>`) titles table-style pages |
 | `rtm` | `path`, `idColumn`, and the `columns` shown in the generated matrix |
 | `architecture` | `overview`, `adrDir` and `adrIndex`, relative to `docs` |
-| `testPlan` | `path` and `idColumn`; every table row whose first cell starts with a test-scope ID is a test |
-| `scopes.software` | `directory`, `idPrefix` or `idPrefixes`, and the ordered `sections`, each `{"name", "from"}` with `from` one of `block:<label>`, `table:<header>` or `rtm:<column>` |
+| `testPlan` | `path` and `idColumn`; every table row whose first cell starts with a test-scope ID is a test. `canonical` (optional) makes the pages of tests with passing evidence [canonical](#canonical-test-pages) |
+| `scopes.software` | `directory`, `idPrefix` or `idPrefixes`, and the ordered `sections`, each `{"name", "from"}` with `from` one of `block:<label>`, `table:<header>`, `rtm:<column>` or `plan:tests` (the test IDs whose plan row names the requirement) |
 | `scopes.test` | `directory` and the prefix; needs `testPlan` |
 | `issueLinks` | `false` keeps `owner/repo#N` as text; by default it becomes a GitHub issue link |
 | `names`, `words`, `exclude`, `assetDirs`, `sections`, `obsidian` | page names by file, word casing, skipped files (globs), image folders, `Home` groups by folder, the Obsidian settings |
@@ -248,13 +248,57 @@ Pages:
 - a requirement page for each specification entry, with its sections in order; a
   `TestID` section links only test pages. A page over the budget moves its
   largest sections to note pages;
-- a stub test page for each test-plan row (`<!-- page-kind: stub -->`); the
-  canonical Stimulus and Required observation items come from
-  `observations.py generate`;
+- a stub test page for each test-plan row (`<!-- page-kind: stub -->`), unless
+  `testPlan.canonical` makes it a [canonical skeleton](#canonical-test-pages);
 - every other Markdown page of `docs/`, with relative links rewritten to
   wikilinks or repository URLs, the generated matrix, `ADR-Index`, `Home` and
   `_Sidebar`. A page over 16,384 bytes becomes a hub whose children are its
   parts, and `Home` indexes every page, as the standard's whole-wiki rules require.
+
+### Canonical test pages
+
+Without `testPlan.canonical`, every test is a stub and the output is unchanged.
+With it, a test gets a skeleton page (a Stimulus and a Required observation that
+say `Pending:`) only when the evidence ran and passed a test file that its linked
+requirements name. Every other test stays a stub, which the standard defines as
+"no definition exists yet", and a test whose linked file has a failing case stays a
+stub with a warning in the summary. `Home` and the JSON summary count the pages:
+`N canonical, M stub`. A stub is never counted as verified.
+
+```json
+"testPlan": {"path": "testing/test-plan.md", "idColumn": "Test Evidence",
+  "canonical": {"evidence": ["evidence.json"], "artifactSection": "TestArtifact",
+                "testFiles": ["\\.test\\.ts$"], "notRunReason": "it needs a VS Code extension host"}}
+```
+
+- `evidence`: `rsr/test-evidence@1` files from `observations.py evidence`, relative to
+  the member root. They must all record the member's `HEAD`: **the evidence's member
+  commit must equal the wiki's**, so run the tests and the generator at the same
+  commit, or the generator refuses (exit 2).
+- `artifactSection` (default `TestArtifact`): the software section whose text names
+  the test files. The test must be linked from the requirement's `TestID` section,
+  for which `plan:tests` is the source when the RTM has no `TestID` column. The
+  generator reads the written requirement pages the way `observations.py stimulus`
+  does, so both choose the same files.
+- `testFiles`: regular expressions for test-file paths. A tracked test file that a
+  linked requirement names and the evidence did not run is declared in the page as
+  `Not verified here: <files>: <notRunReason>.`, which `observations.py generate`
+  keeps below the list.
+
+The pipeline order is fixed; run all of it in one clean checkout at the member
+commit:
+
+1. run the member's tests and write the report (`vitest run --reporter=json`, or
+   `pytest --junitxml`);
+2. `observations.py evidence --report <report> --platform <label> --output evidence.json`;
+3. `wiki_generate.py --out <wiki clone>`;
+4. `observations.py stimulus --wiki <wiki clone> --evidence evidence.json --step <setup> --command '<runner> {files}'`;
+5. `observations.py generate --wiki <wiki clone> --evidence evidence.json`;
+6. commit the clone, then `observations.py check --wiki <wiki clone> --member-commit <commit> --evidence evidence.json`.
+
+Fail the pipeline if any page still holds `Pending:`. `wiki_generate.py --check`
+compares the skeletons, so it reports the pages that steps 4 and 5 filled; check
+drift by running steps 3 to 5 into a second directory and comparing it with the clone.
 
 ## Validation
 
